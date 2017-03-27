@@ -1,0 +1,63 @@
+{% extends "tags/base.html" %}
+
+
+{% block main %}
+    <div class="container">
+
+        {#        <div class="row">#}
+        <div class="span7 text-center row">
+            {% if error %}
+                <p>您的用户名和密码不匹配，请重试</p>
+            {% endif %}
+
+            {#                <form class="form" role="form" method="post" action="">#}
+            {#                    <h2>请登录</h2>#}
+            {#                    {% csrf_token %}#}
+            {#                    <table>#}
+            {#                        <tr>#}
+            {#                            <td>{{ user_form.username.label }}</td>#}
+            {#                            <td>{{ user_form.username }}</td>#}
+            {#                        </tr>#}
+            {#                        <tr>#}
+            {#                            <td>{{ user_form.password.label }}</td>#}
+            {#                            <td>{{ user_form.password }}</td>#}
+            {#                        </tr>#}
+            {#                    </table>#}
+            {##}
+            {#        <input type="email" class="form-control" placeholder="Email address" required autofocus>#}
+            {#        <input type="password" class="form-control" placeholder="Password" required>#}
+            {#                    <div class="col-xs-2">#}
+            {#                        <button type="submit" class="btn btn-primary">登录</button>#}
+            {#                        <input type="hidden" name="next" value="{{ next }}"/>#}
+            {#                    </div>#}
+            {#                </form>#}
+
+
+            <form class="form-horizontal col-lg-offset-4" role="form" method="post">
+                <div class="form-group">
+                    <label for="inputEmail3" class="col-sm-2 control-label">用户名</label>
+
+                    <div class="col-sm-3">
+                        <input name="username" class="form-control" placeholder="用户名">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="inputPassword3" class="col-sm-2 control-label">密码</label>
+
+                    <div class="col-sm-3">
+                        <input name="password" type="password" class="form-control" placeholder="密码">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="col-sm-offset-2 col-sm-2">
+                        <button type="submit" class="btn btn-default">登录</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        {#        </div>#}
+    </div>
+
+
+{% endblock %}

@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{#{% load staticfiles %}#}
+
+{#{% block head_js %}#}
+{#    <script src="http://code.highcharts.com/highcharts.js"></script>#}
+{#    <script data-rocketsrc="/static/js/highcharts.js" type="text/rocketscript" data-rocketoptimized="true"></script>#}
+    {#    <script data-rocketsrc="/static/js/highcharts/themes/default.js" type="text/rocketscript" data-rocketoptimized="true"></script>#}
+{#{% endblock %}#}
+
+{% block main %}
+    <div class="row">
+        <div class="col-sm-3 col-md-2 sidebar">
+            <ul class="nav nav-sidebar">
+                <li {% if not price_trend %}class="active"{% endif %}><a href="/">Overview</a></li>
+                <li {% if price_trend == 1 %}class="active"{% endif %}><a href="/up">涨价单品数据统计</a></li>
+                <li {% if price_trend == 2 %}class="active"{% endif %}><a href="/down">降价单品数据统计</a></li>
+                {#                <li><a href="#">Export</a></li>#}
+            </ul>
+
+        </div>
+
+    <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main" id="container"></div>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('#container').highcharts({
+                {#                    chart: {#}
+                {#                        type: 'column'#}
+                {#                    },#}
+                title: {
+                    text: 'Brand_id:{{ brand_id }} Region:{{ region }}'
+                },
+                subtitle: {
+                    text: '最近10次爬取数量'
+                },
+                xAxis: {
+                    categories: [{% for e in end_time %}"{{ e|date:"m-d" }}", {% endfor %}],
+                labels: {
+                    rotation: -45,
+                    style: {
+                        fontSize: '13px',
+                        fontFamily: 'Verdana, sans-serif'
+                    }
+                }
+                    },
+                    yAxis: {
+                        min: 0,
+                        title: {
+                            text: '单品数量'
+                        }
+                    },
+                    tooltip: {
+                        headerFormat: '<span style="font-size:10px">{point.key}</span>',
+                        shared: true,
+                        useHTML: true
+                    },
+                    plotOptions: {
+                        column: {
+                            pointPadding: 0.2,
+                            borderWidth: 0
+                        }
+                    },
+                    series: [
+                        {
+                            name: 'original_no',
+                            data: [{{ orginal_no|join:','  }}]
+
+                        },
+                        {
+                            name: 'touch_no',
+                            data: [{{ touch_no|join:','  }}]
+
+                        }
+                    ]
+                });
+        });
+    </script>
+
+    {#    <script>$(function () {#}
+    {#        $('#container').highcharts({#}
+    {#            chart: {#}
+    {#                type: 'column'#}
+    {#            },#}
+    {#            title: {#}
+    {#                text: 'World\'s largest cities per 2014'#}
+    {#            },#}
+    {#            subtitle: {#}
+    {#                text: 'Source: <a href="http://en.wikipedia.org/wiki/List_of_cities_proper_by_population">Wikipedia</a>'#}
+    {#            },#}
+    {#            xAxis: {#}
+    {#                type: 'category',#}
+    {#                labels: {#}
+    {#                    rotation: -45,#}
+    {#                    style: {#}
+    {#                        fontSize: '13px',#}
+    {#                        fontFamily: 'Verdana, sans-serif'#}
+    {#                    }#}
+    {#                }#}
+    {#            },#}
+    {#            yAxis: {#}
+    {#                min: 0,#}
+    {#                title: {#}
+    {#                    text: 'Population (millions)'#}
+    {#                }#}
+    {#            },#}
+    {#            legend: {#}
+    {#                enabled: false#}
+    {#            },#}
+    {#            tooltip: {#}
+    {#                pointFormat: 'Population in 2008: <b>{point.y:.1f} millions</b>'#}
+    {#            },#}
+    {#            series: [#}
+    {#                {#}
+    {#                {name: 'original_no',#}
+    {#                    data: [#}
+    {#                            {% for data in infos %}["{{ data.end_time|date:"m-d" }}",{{ data.original_no }}],{% endfor %}#}
+    {#                    ]},#}
+    {#                {name: 'original_no',#}
+    {#                    data: [#}
+    {#                            {% for data in infos %}["{{ data.end_time|date:"m-d" }}",{{ data.touch_no }}],{% endfor %}#}
+    {#                    ]},#}
+    {##}
+    {#                {dataLabels: {#}
+    {#                        enabled: true,#}
+    {#                        rotation: -90,#}
+    {#                        color: '#FFFFFF',#}
+    {#                        align: 'right',#}
+    {#                        x: 10,#}
+    {#                        y: 10,#}
+    {#                        style: {#}
+    {#                            fontSize: '13px',#}
+    {#                            fontFamily: 'Verdana, sans-serif',#}
+    {#                            textShadow: '0 0 3px black'#}
+    {#                        }#}
+    {#                    }#}
+    {#                }#}
+    {#            ]#}
+    {#        });#}
+    {#    });</script>#}
+{% endblock %}

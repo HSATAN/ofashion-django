@@ -1,0 +1,161 @@
+{% extends "tags/base.html" %}
+{% block main %}
+
+
+    {% url 'manage' as manage_url %}
+
+    <div class="container">
+        <div class="row">
+            <div class="span7 text-center">
+                <span>标签映射品牌：</span>
+
+                <div class="btn btn-group btn-xs">
+                    <button class="btn btn-warning dropdown-toggle" type="button" id="dropdownMenu1"
+                            data-toggle="dropdown">
+                        {% if brand_name %}
+                            {{ brand_name }}
+                        {% else %}
+                            无{% endif %}
+                        <span class="caret"></span>
+                    </button>
+
+
+                    <ul class="dropdown-menu" role="menu" style="height:70vh;overflow-y: scroll;">
+                        {% for brand in brands %}
+                            <li class="center-block"><a
+                                    href="/tags/mapping/{{ brand.brand_id }}">{{ brand.brandname_e }}</a></li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            <hr>
+            <table class="table table-striped table-bordered">
+                <thead>
+                <tr>
+                    <th>品牌编号</th>
+                    <th>国家</th>
+                    <th>标签类型</th>
+                    <th>标签名称</th>
+                    <th>标签列表</th>
+                    <th>映射标签1</th>
+                    <th>映射标签2</th>
+                    <th>映射标签3</th>
+                    <th>action</th>
+                </tr>
+                </thead>
+
+                {#                <thead>#}
+                {#                {% for form in forms %}#}
+                {##}
+                {#                    {% if forloop.first %}#}
+                {#                        <tr>#}
+                {#                        {% for field in form.visible_fields %}#}
+                {#                            <th>{{ field.label_tag }}</th>#}
+                {#                        {% endfor %}</tr>#}
+                {#                    {% endif %}#}
+                {##}
+                {#                    </thead>#}
+                {#                    <tbody>#}
+                {#                    <tr>#}
+                {#                        {% for field in form.visible_fields %}#}
+                {#                            {% if field.mapping_list %}#}
+                {#                                <td id="">#}
+                {#                                    {% for tag in field.mapping_list %}{{ tag }} {% endfor %}</td>#}
+                {#                            {% else %}#}
+                {#                                <td>{{ field.value }}</td>#}
+                {#                            {% endif %}#}
+                {#                            <td>{{ field.value }}</td>#}
+                {#                        {% endfor %}#}
+                {#                    </tr>#}
+                {#                {% endfor %}#}
+                {#                </tbody>#}
+                {% for form in forms %}
+                    <tbody>
+                    <form method="post" id="form{{ form.idmappings.value }}">{% csrf_token %}
+                                    <span style="display: none">{{ form.brand }}
+                                            {{ form.region }}
+                                            {{ form.tag_type }}
+                                        {{ form.tag_name }}</span>
+                        <tr style="display: none">
+                            <td>
+                                <lable for='id'>id：</lable>
+                            </td>
+                            <td>{{ form.idmappings }}</td>
+                            <td>{{ form.brand_id }}</td>
+                            <td>{{ form.idmappings.errors }}</td>
+                            <td>{{ form.mapping_list }}</td>
+                        </tr>
+                        <tr>
+                            <td>{{ form.brand_id.value }}</td>
+                            <td>{{ form.region.value }}</td>
+                            <td>{{ form.tag_type.value }}</td>
+                            <td>{{ form.tag_name.value }}</td>
+                            {% if form.instance.mapping_list %}
+                                <td id="list{{ form.idmappings.value }}">
+                                    {% for tag in form.instance.mapping_list %}{{ tag }} {% endfor %}</td>
+                            {% else %}
+                                <td id="list{{ form.idmappings.value }}"></td>{% endif %}
+
+
+                            <td>{{ form.mapping_tag1 }}</td>
+                            <td>{{ form.mapping_tag2 }}</td>
+                            <td>{{ form.mapping_tag3 }}</td>
+                            <td>
+                                <button type="button" class="btn btn-success" id="{{ form.idmappings.value }}"
+                                        onclick="save_tag(this.id);">保存
+                                </button>
+                            </td>
+
+                        </tr>
+                    </form>
+                    </tbody>
+                {% endfor %}
+
+            </table>
+        </div>
+    </div>
+
+    {#    <script>#}
+    {#        $(document).ready(function () {#}
+    {#            $('#tag150421264').submit(function () { // catch the form's submit event#}
+    {#                $.ajax({ // create an AJAX call...#}
+    {#                    data: $(this).serialize(), // get the form data#}
+    {#                    type: $(this).attr('method'), // GET or POST#}
+    {#                    url: '/tags/mapping_ajax', // the file to call#}
+    {#                    success: function (result) { // on success..#}
+    {#                        alert(result);#}
+    {#                        $('#list150421264').html(result);#}
+    {#                    },#}
+    {#                    error: function (e, x, r) { // on error..#}
+    {#                        alert(e);#}
+    {#                        $('#list150421264').html(e);#}
+    {#                    }#}
+    {#                });#}
+    {#                return false;#}
+    {#            });#}
+    {#        });#}
+    {#    </script>#}
+
+
+    <script type="text/javascript">
+        function save_tag(id) {
+            $.ajax({ // create an AJAX call...
+                data: $('#form' + id).serialize(), // get the form data
+                type: $('#form' + id).attr('method'), // GET or POST
+                url: '/tags/mapping_ajax', // the file to call
+                success: function (result) { // on success..
+                    $('#list' + id).html(result);
+                    $('#list' + id).css('background-color','#f5f5f5');
+                    return false;
+                },
+                error: function (e, x, r) { // on error..
+                    alert('error!');
+                    {#                        $('#list150421264').html(e);#}
+                    return false;
+                }
+            });
+
+        }
+    </script>
+{% endblock %}
+

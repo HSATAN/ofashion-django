@@ -1,0 +1,75 @@
+*** Starting uWSGI 2.0.5.1 (64bit) on [Fri Jul 24 16:03:41 2015] ***
+compiled with version: 4.8.2 on 05 June 2014 18:13:44
+os: Linux-3.13.0-24-generic #47-Ubuntu SMP Fri May 2 23:30:00 UTC 2014
+nodename: ICN-QC-CENTRAL-01
+machine: x86_64
+clock source: unix
+detected number of CPU cores: 2
+current working directory: /var/www/html/mfashion_api
+detected binary path: /usr/local/bin/uwsgi
+!!! no internal routing support, rebuild with pcre support !!!
+setgid() to 33
+setuid() to 33
+*** WARNING: you are running uWSGI without its master process manager ***
+your processes number limit is 31457
+your memory page size is 4096 bytes
+detected max file descriptor number: 1024
+*** starting uWSGI Emperor ***
+*** has_emperor mode detected (fd: 6) ***
+[uWSGI] getting INI configuration from uwsgi.ini
+open("/var/www/html/log/mysite.log"): Permission denied [core/logging.c line 291]
+unlink(): Operation not permitted [core/uwsgi.c line 1545]
+Fri Jul 24 16:03:41 2015 - [emperor] curse the uwsgi instance uwsgi.ini (pid: 28032)
+Fri Jul 24 16:03:44 2015 - [emperor] removed uwsgi instance uwsgi.ini
+*** has_emperor mode detected (fd: 6) ***
+[uWSGI] getting INI configuration from uwsgi.ini
+open("/var/www/html/log/mysite.log"): Permission denied [core/logging.c line 291]
+unlink(): Operation not permitted [core/uwsgi.c line 1545]
+Fri Jul 24 16:03:47 2015 - [emperor] curse the uwsgi instance uwsgi.ini (pid: 28041)
+Fri Jul 24 16:03:50 2015 - [emperor] removed uwsgi instance uwsgi.ini
+*** has_emperor mode detected (fd: 6) ***
+[uWSGI] getting INI configuration from uwsgi.ini
+open("/var/www/html/log/mysite.log"): Permission denied [core/logging.c line 291]
+unlink(): Operation not permitted [core/uwsgi.c line 1545]
+Fri Jul 24 16:03:53 2015 - [emperor] curse the uwsgi instance uwsgi.ini (pid: 28052)
+Fri Jul 24 16:03:56 2015 - [emperor] removed uwsgi instance uwsgi.ini
+Fri Jul 24 16:03:56 2015 - [emperor] unloyal bad behaving vassal found: uwsgi.ini throttling it...
+*** has_emperor mode detected (fd: 6) ***
+[uWSGI] getting INI configuration from uwsgi.ini
+open("/var/www/html/log/mysite.log"): Permission denied [core/logging.c line 291]
+unlink(): Operation not permitted [core/uwsgi.c line 1545]
+Fri Jul 24 16:03:59 2015 - [emperor] curse the uwsgi instance uwsgi.ini (pid: 28067)
+Fri Jul 24 16:04:02 2015 - [emperor] removed uwsgi instance uwsgi.ini
+*** has_emperor mode detected (fd: 6) ***
+[uWSGI] getting INI configuration from uwsgi.ini
+open("/var/www/html/log/mysite.log"): Permission denied [core/logging.c line 291]
+unlink(): Operation not permitted [core/uwsgi.c line 1545]
+Fri Jul 24 16:04:05 2015 - [emperor] curse the uwsgi instance uwsgi.ini (pid: 28083)
+Fri Jul 24 16:04:08 2015 - [emperor] removed uwsgi instance uwsgi.ini
+*** has_emperor mode detected (fd: 6) ***
+[uWSGI] getting INI configuration from uwsgi.ini
+open("/var/www/html/log/mysite.log"): Permission denied [core/logging.c line 291]
+unlink(): Operation not permitted [core/uwsgi.c line 1545]
+Fri Jul 24 16:04:14 2015 - [emperor] curse the uwsgi instance uwsgi.ini (pid: 28096)
+Fri Jul 24 16:04:17 2015 - [emperor] removed uwsgi instance uwsgi.ini
+*** has_emperor mode detected (fd: 6) ***
+[uWSGI] getting INI configuration from uwsgi.ini
+open("/var/www/html/log/mysite.log"): Permission denied [core/logging.c line 291]
+unlink(): Operation not permitted [core/uwsgi.c line 1545]
+Fri Jul 24 16:04:23 2015 - [emperor] curse the uwsgi instance uwsgi.ini (pid: 28111)
+Fri Jul 24 16:04:26 2015 - [emperor] removed uwsgi instance uwsgi.ini
+*** has_emperor mode detected (fd: 6) ***
+[uWSGI] getting INI configuration from uwsgi.ini
+open("/var/www/html/log/mysite.log"): Permission denied [core/logging.c line 291]
+unlink(): Operation not permitted [core/uwsgi.c line 1545]
+Fri Jul 24 16:04:32 2015 - [emperor] curse the uwsgi instance uwsgi.ini (pid: 28129)
+Fri Jul 24 16:04:35 2015 - [emperor] removed uwsgi instance uwsgi.ini
+*** has_emperor mode detected (fd: 6) ***
+[uWSGI] getting INI configuration from uwsgi.ini
+open("/var/www/html/log/mysite.log"): Permission denied [core/logging.c line 291]
+unlink(): Operation not permitted [core/uwsgi.c line 1545]
+Fri Jul 24 16:04:44 2015 - [emperor] curse the uwsgi instance uwsgi.ini (pid: 28152)
+Fri Jul 24 16:04:47 2015 - [emperor] removed uwsgi instance uwsgi.ini
+[emperor] *** RAGNAROK EVOKED ***
+Fri Jul 24 16:04:52 2015 - The Emperor is buried.
+[uWSGI] getting INI configuration from /var/www/html/conf/uwsgi.ini

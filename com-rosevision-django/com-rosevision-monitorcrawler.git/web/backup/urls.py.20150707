@@ -1,0 +1,14 @@
+#! -*- coding:utf-8 -*-
+from django.conf.urls import url, patterns
+
+urlpatterns = patterns(
+    'web.views',
+    url(r'^$','index',name='index'),
+    url(r'^(?P<price>up|down)/$', 'index', name='price'),
+    url(r'^(?P<price>up|down)/(?P<date_fetch>\w+)/$', 'index', name='date_list'),
+    url(r'^(?P<price>up|down)/(?P<date_fetch>\w+)/(?P<brand_id>\w+)/$', 'index', name='brand_list'),
+    url(r'^chart$', 'chart', name='chart'),
+    url(r'^chart/(?P<brand_id>\w+)', 'chart', name='chart'),
+    url(r'^trend', 'trend', name='trend'),
+
+)

@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{#{% load staticfiles %}#}
+
+{#{% block head_js %}#}
+{#    <script src="http://code.highcharts.com/highcharts.js"></script>#}
+{#    <script data-rocketsrc="/static/js/highcharts.js" type="text/rocketscript" data-rocketoptimized="true"></script>#}
+{#    <script data-rocketsrc="/static/js/highcharts/themes/default.js" type="text/rocketscript" data-rocketoptimized="true"></script>#}
+{#{% endblock %}#}
+
+{% block main %}
+    <div class="row">
+
+    {% if all_flag == 0  %}
+            <div class="col-sm-3 col-md-2 sidebar">
+            <ul class="nav nav-sidebar">
+                <li {% if not price_trend %}class="active"{% endif %}><a href="/">Overview</a></li>
+                <li {% if price_trend == 1 %}class="active"{% endif %}><a href="/table">Table</a></li>
+
+                {% for val in brands %}
+                    <li {% if price_trend == 1 %}class="active"{% endif %}><a
+                            href="/chart/{{ val.brand_id }}">{{ val.brand_id }}</a></li>
+                {% endfor %}
+            </ul>
+
+        </div>
+            <br>
+        <div class="col-xs-offset-2">
+            {% for region,infos in crawl_infos.items %}
+
+                <div class="col-xs-6" id="id{{ region }}"></div>
+
+                <script type="text/javascript">
+                    $(document).ready(function () {
+                        $('#id{{ region }}').highcharts({
+                            {#                    chart: {#}
+                            {#                        type: 'column'#}
+                            {#                    },#}
+                            title: {
+                                text: 'Brand_id:{{ brand_id }} Region:{{ region }}'
+                            },
+                            subtitle: {
+                                text: '最近10次爬取数量'
+                            },
+                            xAxis: {
+                                categories: [{% for info in infos %}"{{ info.end_time|date:"m-d" }}", {% endfor %}],
+                                labels: {
+                                    rotation: -45,
+                                    style: {
+                                        fontSize: '13px',
+                                        fontFamily: 'Verdana, sans-serif'
+                                    }
+                                }
+                            },
+                            yAxis: {
+                                min: 0,
+                                title: {
+                                    text: '单品数量'
+                                }
+                            },
+                            tooltip: {
+                                headerFormat: '<span style="font-size:10px">{point.key}</span>',
+                                shared: true,
+                                useHTML: true
+                            },
+                            plotOptions: {
+                                column: {
+                                    pointPadding: 0.2,
+                                    borderWidth: 0
+                                }
+                            },
+                            series: [
+                                {
+                                    name: 'original_no',
+                                    data: [{% for info in infos %}{{ info.original_no }}, {% endfor %}]
+
+                                },
+                                {
+                                    name: 'touch_no',
+                                    data: [{% for info in infos %}{{ info.touch_no }}, {% endfor %}]
+
+                                }
+                            ]
+                        });
+                    });
+                </script>
+            {% endfor %}
+        </div>
+            <br>
+            <br>
+    {% endif %}
+    {% if all_flag == 1 %}
+        <div class="col-sm-3 col-md-2 sidebar">
+            <ul class="nav nav-sidebar">
+                <li {% if not price_trend %}class="active"{% endif %}><a href="/">Overview</a></li>
+                <li {% if price_trend == 1 %}class="active"{% endif %}><a href="/table">Table</a></li>
+
+                {% for val in brands %}
+                    <li {% if price_trend == 1 %}class="active"{% endif %}><a
+                            href="/chart/{{ val.brand_id }}">{{ val.brand_id }}</a></li>
+                {% endfor %}
+            </ul>
+
+        </div>
+
+        <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+        <table class="table table-striped table-bordered" style="font-size: 12px">
+            <thead>
+                <tr>
+                    <th style="text-align: center">brand_id</th> {# 品牌id #}
+                    <th style="text-align: center">region</th>   {# 国家 #}
+                    {% for cur in time_list %}
+                    <th style="text-align: center">{{ cur|date:'Y-m-d' }}</th>
+                    {% endfor %}
+
+                </tr>
+            </thead>
+
+            <tbody>
+            {% for cc in result %}
+                {% for brand_id,v in cc.items %}
+                    {% for region,v1 in v.items %}
+                    <tr>
+                        <td style="text-align: center"><a href="/chart/{{ brand_id }}">{{ brand_id}}</a></td>
+                        <td style="text-align: center">{{ region }}</td>
+                            {% for j in v1 %}
+                                <td style=" text-align: center; background: {% if j.flag == 1 %}#e38d13{% endif %}">{{ j.original_no }}&nbsp;/&nbsp;{{ j.touch_no }}</td>
+                            {% endfor %}
+                    </tr>
+                    {% endfor %}
+                {% endfor %}
+            {% endfor %}
+
+            </tbody>
+        </table>
+        </div>
+{% endif %}
+    </div>
+
+
+{% endblock %}

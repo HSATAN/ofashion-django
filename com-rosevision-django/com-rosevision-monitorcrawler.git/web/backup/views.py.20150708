@@ -1,0 +1,164 @@
+#-*- coding:utf-8 -*-
+import datetime
+from django.shortcuts import render
+from django.shortcuts import render_to_response, HttpResponseRedirect
+from django.db.models import Count
+from models import *
+from django.contrib.auth.decorators import login_required
+# Create your views here.
+
+# @login_required()
+def index(request, price=None, date_fetch=None, brand_id=None):
+    brand_id_exclude = [10006, 10008, 10009, 10066, 10076, 10093, 10105, 10106, 10108, 10109, 10114, 10117, 10142,
+                        10149, 10152, 10169, 10178, 10192, 10204, 10218, 10226, 10259, 10263, 10300, 10316, 10333,
+                        10350, 10354, 10367, 10373, 10429, 10617, 10669, 11301, ]
+    brand_id_include = [10009, 10029, 10030, 10049, 10057, 10058, 10066, 10070, 10074, 10080, 10084, 10117, 10135,
+                        10142, 10149, 10150, 10152, 10166, 10178, 10184, 10186, 10192, 10204, 10212, 10220, 10226,
+                        10239, 10270, 10300, 10305, 10308, 10333, 10350, 10354, 10369, 10373, 10388, 10897, 11301,
+                        13084]
+    # brand_id_exclude = []
+    price_trend = None
+    if price == 'up':
+        price_trend = 1
+    elif price == 'down':
+        price_trend = 2
+
+    date_list, brand_list, product_list, price_up, price_down = (None,) * 5
+
+    if price:
+        #按日期分类列表
+        date_list = PriceDashboard.objects.filter(brand_id__in=brand_id_include).filter(price_trend=price_trend).extra(
+            {'date_fetch': "date(price_fetch_time)"}).values(
+            'date_fetch').annotate(count_no=Count('id')).order_by('-date_fetch')
+
+        #按品牌分类列表
+        if date_fetch:
+            date_fetch = datetime.datetime.strptime(date_fetch, '%Y%m%d').date()
+
+            brand_list = PriceDashboard.objects.filter(brand_id__in=brand_id_include).filter(price_trend=price_trend,
+                                                                                             price_fetch_time__startswith=date_fetch).values(
+                'brand_id', 'brand_name').annotate(count_no=Count('id')).order_by('brand_id')
+
+            #单品列表
+            if brand_id:
+                brand_id = int(brand_id)
+                product_list = PriceDashboard.objects.filter(brand_id__in=brand_id_include).filter(
+                    price_trend=price_trend,
+                    price_fetch_time__startswith=date_fetch,
+                    brand_id=brand_id).order_by('brand_id')
+    else:
+        price_up = PriceDashboard.objects.filter(brand_id__in=brand_id_include).filter(price_trend=1).extra(
+            {'date_fetch': "date(price_fetch_time)"}).values(
+            'date_fetch').annotate(count_no=Count('id')).order_by('-date_fetch')[:20:-1]
+
+        price_down = PriceDashboard.objects.filter(brand_id__in=brand_id_include).filter(price_trend=2).extra(
+            {'date_fetch': "date(price_fetch_time)"}).values(
+            'date_fetch').annotate(count_no=Count('id')).order_by('-date_fetch')[:20:-1]
+    return render_to_response("index.html",
+                              {'date_list': date_list, 'brand_list': brand_list, 'product_list': product_list,
+                               'price_trend': price_trend, 'price_up': price_up, 'price_down': price_down})
+
+
+def chart(request, brand_id=None):
+    data = {}
+    products = None
+    #brands = CrawlInfo.objects.order_by('brand_id').values('brand_id').distinct()
+
+    brands = CrawlInfo.objects.exclude(brand_id__in=[10006, 10080, 10105, 10108, 10114, 10117, 10138, 10186,
+                                                     10218, 10268, 10204, 10305, 10376, 10617, 10767, 10880, 11401,
+                                                     11980, 12152, 13903]).order_by('brand_id').values('brand_id').distinct()
+
+    if brand_id:
+        all_flag = 0
+        crawl_infos = {}
+        regions = CrawlInfo.objects.filter(brand_id=brand_id).values_list('region', flat=True).distinct()
+        for region in regions:
+            crawl_infos[region] = CrawlInfo.objects.filter(brand_id=brand_id).filter(region=region).order_by(
+                '-end_time')[:10:-1]
+    else:
+        all_flag = 0
+        crawl_infos = CrawlInfo.objects.filter(brand_id=10166).filter(region='us').order_by('-end_time')[:10:-1]
+
+        # if crawl_infos:
+        #     end_time, touch_no, orginal_no = [], [], []
+        #     brand_id = 10166
+        #     region = request.GET['region'] if 'region' in request.GET else 'us'
+        #     for r in crawl_infos[::-1]:
+        #         end_time.append(r.end_time)
+        #         touch_no.append(r.touch_no)
+        #         orginal_no.append(r.original_no)
+
+        # return render_to_response("chart.html",
+        #                           {'brand_id': brand_id, 'region': region, 'end_time': end_time, 'touch_no': touch_no,
+        #                            'orginal_no': orginal_no, 'infos': crawl_infos})
+    return render_to_response("chart.html", {'all_flag':all_flag,'brands': brands, 'brand_id': brand_id, 'crawl_infos': crawl_infos})
+
+
+def table(request):
+    """
+        表格显示
+    """
+
+    #51个品牌
+    brands = CrawlInfo.objects.exclude(brand_id__in=[10006, 10080, 10105, 10108, 10114, 10117, 10138, 10186,
+                                                     10218, 10268, 10204, 10305, 10376, 10617, 10767, 10880, 11401,
+                                                     11980, 12152, 13903]).order_by('brand_id').values('brand_id').distinct()
+
+    all_flag = 1
+    time_list = [datetime.date.today() - datetime.timedelta(days=i) for i in range(0,10)]
+    time_list = time_list[::-1]
+    all_crawl_infos = {}
+
+    for brand in brands:
+        brand_id = brand['brand_id']
+
+        crawl_infos = {}
+        regions = CrawlInfo.objects.filter(brand_id=brand_id).values_list('region', flat=True).distinct()  #查询该品牌的所有国家
+
+        for region in regions:
+            crawl_info = []
+            start = datetime.datetime(time_list[0].year, time_list[0].month, time_list[0].day, 0, 0, 0)
+            end = datetime.datetime(time_list[9].year, time_list[9].month, time_list[9].day, 23, 59, 59)
+            queryset = CrawlInfo.objects.filter(brand_id=brand_id).filter(region=region).\
+                filter(end_time__range=(start, end))
+
+            for i in time_list:
+                info = {}
+                end_time_start = datetime.datetime(i.year, i.month, i.day, 0, 0, 0)
+                end_time_end = datetime.datetime(i.year, i.month, i.day, 23, 59, 59)
+                temp = queryset.filter(end_time__range=(end_time_start, end_time_end))
+
+                if temp.exists():
+                    temp = temp[0]
+                    info['original_no'] = temp.original_no
+                    info['touch_no'] = temp.touch_no
+                    info['flag'] = 1 if float(temp.touch_no)/float(temp.original_no) < 0.6 else 0
+                    crawl_info.append(info)
+
+                else:
+                    info['original_no'] = None
+                    info['touch_no'] = None
+                    crawl_info.append(info)
+
+            crawl_infos[region] = crawl_info
+        all_crawl_infos[brand_id] = crawl_infos
+
+    return render_to_response("chart.html", {'brands':brands,'all_flag':all_flag,
+                                             'time_list':time_list,'all_crawl_infos':all_crawl_infos})
+
+
+@login_required()
+def trend(request):
+    top_products = ['45964045ec70537950236f5f9d3b4b49', '9ecf48f372f5b86ad5866a3f38aac6',
+                    '111650eff2fea9b5d5ce617ab34a097', '48233f0d74d6117bf958bf06e6fb275',
+                    '1a13a1dcca8ac6acce1b0e8c888198d', 'f63c18ca69dbc5bef64318374bafa612',
+                    '68ef3114f61b4774b220dc04f8dd286', 'd7c39cdec1b9a75af8aaf89f95cf7de',
+                    '58d6b246789d3eae745e9924bae9c', 'ede93613b3b8a85d7b7f98afe0d23eb2',
+                    '44fbab90d22122e3dda1df19f1284ce', 'da834af44712bf4980b9d211449e7c6',
+                    'deafffd572f171f7a0a942fa3791c', '714f3bd87b65a94fb39c0db9a7c3',
+                    'd5ffff9f19bee81b12edcc96d406678', 'de833c63bdcb3a1d8c4770c8eebd13d7',
+                    'a4d3bd9cf56891a91ae6c510b950d79']
+    t = Products.objects.filter(fingerprint=top_products[0])
+    price = ProductsPriceHistory.objects.filter(idproducts=t[0].idproducts)
+    # trend_list = ProductsPriceHistory.objects.filter(idproducts=1111)
+    return render_to_response("trend.html", {'trend_list': t})

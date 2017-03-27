@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+{% load web_tag %}
+
+{% block main %}
+    <div class="row">
+        <div class="col-sm-3 col-md-2 sidebar">
+            <ul class="nav nav-sidebar">
+                <li {% if not price_trend %}class="active"{% endif %}><a href="/">Overview</a></li>
+                <li {% if price_trend == 1 %}class="active"{% endif %}><a href="/up">涨价单品数据统计</a></li>
+                <li {% if price_trend == 2 %}class="active"{% endif %}><a href="/down">降价单品数据统计</a></li>
+                {#                <li><a href="#">Export</a></li>#}
+            </ul>
+
+        </div>
+        <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+            <h1 class="page-header">Dashboard</h1>
+
+            {% if not date_list %}
+                <div id="price_up_down" style="width:100%; height:500px;"></div>
+
+                <script type="text/javascript">
+                    $(document).ready(function () {
+                        $('#price_up_down').highcharts({
+                            chart: {
+                                type: 'spline'
+                            },
+                            title: {
+                                text: '涨降价趋势概览'
+                            },
+                            subtitle: {
+                                text: '最近20天涨降价'
+                            },
+                            xAxis: {
+                                categories: [
+                                    {% for val in price_up %}"{{ val.date_fetch|date:'Y-m-d' }}", {% endfor %}],
+                                labels: {
+                                    rotation: -45,
+                                    style: {
+                                        fontSize: '13px',
+                                        fontFamily: 'Verdana, sans-serif'
+                                    }
+                                }
+                            },
+                            yAxis: {
+                                min: 0,
+                                title: {
+                                    text: '总数'
+                                }
+                            },
+                            tooltip: {
+                                headerFormat: '<span style="font-size:10px">{point.key}</span>',
+                                shared: true,
+                                useHTML: true
+                            },
+                            plotOptions: {
+                                column: {
+                                    pointPadding: 0.2,
+                                    borderWidth: 0
+                                }
+                            },
+                            series: [
+                                {
+                                    name: '涨价数',
+                                    data: [{% for val in price_up %} {{ val.count_no }}, {% endfor %}]
+
+                                },
+                                {
+                                    name: '降价数',
+                                    data: [{% for val in price_down %} {{ val.count_no }}, {% endfor %}]
+
+                                }
+                            ]
+                        });
+                    });
+                </script>
+
+            {% endif %}
+
+            {% if date_list and not brand_list and not product_list %}
+                <h2 class="sub-header">
+                    {% if price_trend == 1 %}涨价{% elif price_trend == 2 %}降价{% endif %}单品数据统计</h2>
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                        <tr>
+                            <th>日期</th>
+                            <th>{% if price_trend == 1 %}涨价{% elif price_trend == 2 %}降价{% endif %}总数量</th>
+                            <th>详情</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for val in date_list %}
+                            <tr>
+                                <td>{{ val.date_fetch|date:'Y-m-d' }}</td>
+                                <td>{{ val.count_no }}</td>
+                                <td><a href="{{ val.date_fetch|date:'Ymd' }}">详情</a></td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+
+            {% if brand_list and not product_list %}
+                <h2 class="sub-header">当日品牌数据统计
+                <button type="button" class="btn btn-info pull-right" onclick="javascript:history.go(-1)">返回
+                    </button></h2>
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                        <tr>
+                            <th>品牌</th>
+                            <th>品牌名称</th>
+                            <th>{% if price_trend == 1 %}涨价{% elif price_trend == 2 %}降价{% endif %}总数量</th>
+                            <th>详情</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for val in brand_list %}
+                            <tr>
+                                <td>{{ val.brand_id }}</td>
+                                <td>{{ val.brand_name }}</td>
+                                <td>{{ val.count_no }}</td>
+                                <td><a href="{{ val.brand_id }}">详情</a></td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+
+
+            {% if product_list %}
+                <h2 class="sub-header">当日品牌数据统计
+                    <button type="button" class="btn btn-info pull-right" onclick="javascript:history.go(-1)">返回
+                    </button>
+                </h2>
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                        <tr>
+                            <th>名称</th>
+                            <th>国家</th>
+                            <th>PID</th>
+                            <th>货币单位</th>
+                            <th>原始价格</th>
+                            <th>原始折扣</th>
+                            <th>最新价格</th>
+                            <th>最新折扣</th>
+                            <th>详情</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for val in product_list %}
+                            <tr>
+                                <td>{{ val.name }}</td>
+                                <td>{{ val.region }}</td>
+                                <td>{{ val.fingerprint }}</td>
+                                <td>{{ val.new_price|json_get:"currency" }}</td>
+                                <td>{{ val.old_price|json_get:"price" }}</td>
+                                <td>{{ val.old_price|json_get:"price_discount" }}</td>
+                                <td>{{ val.new_price|json_get:"price" }}</td>
+                                <td>{{ val.new_price|json_get:"price_discount" }}</td>
+                                <td><a href="http://share.ofashion.me/p/?pid={{ val.fingerprint }}"
+                                       target="_blank">访问</a></td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+
+        </div>
+    </div>
+{% endblock %}
+

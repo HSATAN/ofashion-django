@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    {#    <link rel="icon" href="../../favicon.ico">#}
+
+    <title>OFashion-标签处理系统</title>
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/css/tags.css" rel="stylesheet">
+
+    <script type="text/javascript" src="http://lib.sinaapp.com/js/jquery/2.0.3/jquery-2.0.3.js"></script>
+    <script type="text/javascript">!window.jQuery && document.write('<script type="text/javascript" src="/static/js/jquery.js"><\/script>')</script>
+
+    <script type="text/javascript" src="http://lib.sinaapp.com/js/highcharts/4.0.1/highcharts.js"></script>
+    <script type="text/javascript">!window.Highcharts && document.write('<script type="text/javascript" src="/static/js/highcharts.js"><\/script>')</script>
+
+    <script type="text/javascript" src="http://lib.sinaapp.com/js/bootstrap/v3.0.0/js/bootstrap.min.js"></script>
+    <script type="text/javascript">!window.Highcharts && document.write('<script type="text/javascript" src="/static/js/bootstrap.min.js"><\/script>')</script>
+    <script type="text/javascript" src="/static/js/tags.js"></script>
+
+</head>
+
+<body>
+
+<!-- Fixed navbar -->
+<div class="navbar navbar-default navbar-static-top" role="navigation">
+    <div class="container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/tags">OFashion-标签处理系统</a>
+        </div>
+        <div class="navbar-collapse collapse">
+            {% url 'gender' as gender %}
+            {% url 'tags' as tags_url %}
+            {% url 'tags_manage' as tags_manage_url %}
+            {% url 'manage' as manage_url %}
+            {% url 'mapping' as mapping_url %}
+            {% url 'record' as record_url %}
+
+            <ul class="nav navbar-nav navbar-right">
+                <li {% if is_gender %}class="active"{% endif %}><a href="/tags/gender"><i
+                        class="glyphicon glyphicon-bookmark"></i> <span
+                        style="font-size: 16px;">款式处理</span></a></li>
+
+                <li {% if is_custom %}class="active"{% endif %}><a href="/tags/tags"><i
+                        class="glyphicon glyphicon-tags"></i> <span
+                        style="font-size: 16px;">标签处理</span></a></li>
+
+                <li {% if is_index %}class="active"{% endif %}><a href="/tags"><i
+                        class="glyphicon glyphicon-tags"></i> <span
+                        style="font-size: 16px;">类目处理</span></a></li>
+
+                <li {% if request.path == tags_manage_url %}class="active"{% endif %}><a href="{{ tags_manage_url }}"><i
+                        class="glyphicon glyphicon-tasks"></i> <span
+                        style="font-size: 16px;">标签管理</span></a></li>
+
+                <li {% if request.path == manage_url %}class="active"{% endif %}><a href="{{ manage_url }}"><i
+                        class="glyphicon glyphicon-tasks"></i> <span
+                        style="font-size: 16px;">类目管理</span></a></li>
+
+
+                <li {% if mapping_url in request.path %}class="active"{% endif %}><a href="{{ mapping_url }}"><i
+                        class="glyphicon glyphicon-transfer"></i> <span
+                        style="font-size: 16px;">类目映射</span></a>
+                </li>
+
+                <li {% if request.path == record_url %}class="active"{% endif %}><a href="{{ record_url }}"><i
+                        class="glyphicon glyphicon-search"></i> <span
+                        style="font-size: 16px;">记录查询</span></a>
+                </li>
+
+
+                {% if request.user %}
+                    <li class="dropdown">
+
+                    <a href="" class="dropdown-toggle" data-toggle="dropdown" style="font-size: 16px;"><i
+                            class="glyphicon glyphicon-user"></i>{{ request.user.username }} <span
+                            class="caret"></span></a>
+                    <ul class="dropdown-menu" role="menu">
+                    <li><a href="/accounts/logout">退出</a></li>
+                {% else %}
+                    <li><a href="/accounts/login"><i class="glyphicon glyphicon-log-in"></i> <span
+                            style="font-size: 16px;">
+                    登录</span></a></li>
+                {% endif %}
+                </ul>
+                </li>
+            </ul>
+        </div>
+        <!--/.nav-collapse -->
+    </div>
+</div>
+{% block main %}{% endblock %}
+
+</body>
+
+</html>

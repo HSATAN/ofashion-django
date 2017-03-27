@@ -1,0 +1,300 @@
+{% extends "tags/base.html" %}
+{% load web_tag %}
+{% block main %}
+    {% url 'tags' as tags_url %}
+    <div class="container">
+
+
+        <div class="span7 text-center row">
+            <form class="form-inline" role="form" method="get">
+
+                <select class="form-control" name="sort" id="sort">
+                    <option value="" {% if sort == '' %}selected="selected"{% endif %}>所有标签</option>
+                    <option value="0" {% if sort == '0' %}selected="selected"{% endif %}>无标签</option>
+                    {% for val in custom_tags %}
+                        <option value="{{ val.tag }}"
+                                {% if sort == val.tag %}selected="selected"{% endif %}>{{ val.tag }}</option>
+                    {% endfor %}
+                </select>
+                <select class="form-control" name="brand" id="brand">
+                    <option value="">所有品牌</option>
+                    {% for b in brands %}
+                        <option value="{{ b.brand_id }}"
+                                {% if brand_name == b.brandname_e %}selected="selected"{% endif %}>{{ b.brandname_e }}</option>
+                    {% endfor %}
+                </select>
+
+                <input class="form-control col" type="text" name="search" placeholder="关键字" method="get"
+                       {% if search %}value="{{ search }}"{% endif %}>
+
+                <button class="btn btn-default" type="submit">查询</button>
+
+            </form>
+        </div>
+        <hr>
+
+
+        <div class="navbar-wrapper" style="position:relative;z-index:999;">
+            <nav class="navbar navbar-default" role="navigation" style="background:#6f5499;">
+                <div class="container">
+                    <div class="navbar-header">
+                        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse"
+                                data-target="#bs-example-navbar-collapse-2">
+                            <span class="sr-only">Toggle navigation</span>
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                        </button>
+
+                    </div>
+
+                    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-2">
+
+                        <form class="navbar-form" role="search">
+
+                            <div class="btn btn-group btn-xs">
+                                <button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu1"
+                                        data-toggle="dropdown">
+                                    {% if order == 'new' %}
+                                        时间从新到旧
+                                    {% elif order == 'old' %}
+                                        时间从旧到新
+                                    {% else %}
+                                        时间从旧到新
+                                    {% endif %}
+                                    <span class="caret"></span>
+                                </button>
+
+
+                                <ul class="dropdown-menu" role="menu" style="height:10vh;overflow-y: scroll;">
+                                    <li class="center-block"><a
+                                            href="?{% url_replace request 'order' 'old' %}">时间从旧到新</a></li>
+                                    <li class="center-block"><a
+                                            href="?{% url_replace request 'order' 'new' %}">时间从新到旧</a></li>
+                                </ul>
+                            </div>
+
+
+                            <button type="button" class="btn btn-default" id="sel_all" onclick="select_all();">全选
+                            </button>
+                            <button type="button" class="btn btn-default" id="unsel_all" style="display: none"
+                                    onclick="unselect_all();">取消全选
+                            </button>
+
+                            <div class="navbar-right">
+                                <span style="color: #ffffff;">已选单品<span id="sel_num">0</span>个</span>
+                                <button type="button" class="btn btn-danger" onclick="del_tags();">删除标签</button>
+                                <button type="button" class="btn btn-success" data-toggle="modal"
+                                        data-target="#addsort">新增标签
+                                </button>
+
+                            </div>
+                            {#                            {% endif %}#}
+                        </form>
+
+                    </div>
+
+                </div>
+            </nav>
+        </div>
+
+
+        <hr>
+    </div>
+    <div class="container">
+
+        <div class="row">
+
+            {#新增标签#}
+            <div class="modal fade" id="addsort" tabindex="-1" role="dialog"
+                 aria-labelledby="myModalLabel"
+                 aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal"><span
+                                    aria-hidden="true">&times;</span><span
+                                    class="sr-only">Close</span></button>
+                            <h4 class="modal-title" id="myModalLabel">新增标签</h4>
+                        </div>
+                        <div class="modal-body">
+                            <div id='addsort_button'>
+                                {% for tag in custom_tags %}
+                                    <button type="button" class="btn btn-default my-btn btn-sm"
+                                            value="{{ tag.tag }}"
+                                            data-toggle="button"
+                                            autocomplete="off">{{ tag.tag }}</button>
+                                    {#                                            {% endif %}#}
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+
+                            <button type="button" class="btn btn-primary"
+                                    onclick="add_tags();" data-dismiss="modal">确定
+                            </button>
+                            <button type="button" class="btn btn-default" data-dismiss="modal" onclick="$('#addsort_button button').each(function (i) {
+        $(this).removeClass('active');
+    });">取消
+                            </button>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {#        #打标签，新增标签#}
+            <form method="post" action="{{ current_url }}" id="form_post">{% csrf_token %}
+                {{ formset.management_form }}
+
+                {% for form in formset.forms %}
+
+                    <span style="display: none">{{ form.fingerprint }}
+                    <input id="sel{{ form.fingerprint.value }}" name="{{ form.fingerprint.value }}">
+                    </span>
+
+                    <div class="modal fade" id="edit{{ form.fingerprint.value }}" tabindex="-1" role="dialog"
+                         aria-labelledby="myModalLabel"
+                         aria-hidden="true">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <button type="button" class="close" data-dismiss="modal"><span
+                                            aria-hidden="true">&times;</span><span
+                                            class="sr-only">Close</span></button>
+                                    <h4 class="modal-title" id="myModalLabel">新增标签</h4>
+                                </div>
+                                <div class="modal-body">
+                                    <div style="display: none">{{ form.custom_tags }}</div>
+                                    <div id='buttons{{ form.fingerprint.value }}'>
+                                        {% for tag in form.custom_tags %}
+                                            {#                                            {{ tag.value|join:"," }}#}
+                                            {#                                            {% if tag.choice_value in tag.value %}#}
+                                            {#                                               <button type="button" class="btn btn-default my-btn btn-sm"#}
+                                            {#                                                    data-ref="id_{{ tag.name }}_{{ tag.index }}"#}
+                                            {#                                                    value="{{ tag.choice_value }}"#}
+                                            {#                                                    data-toggle="button"#}
+                                            {#                                                    autocomplete="off"  disabled="disabled">{{ tag.choice_label }}</button>#}
+                                            {#                                            {% else %}#}
+                                            <button type="button" class="btn btn-default my-btn btn-sm"
+                                                    data-ref="id_{{ tag.name }}_{{ tag.index }}"
+                                                    value="{{ tag.choice_value }}"
+                                                    data-toggle="button"
+                                                    autocomplete="off">{{ tag.choice_label }}</button>
+                                            {#                                            {% endif %}#}
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+
+                                    <button type="button" id="{{ form.fingerprint.value }}"
+                                            value="{{ form.fingerprint.value }}" class="btn btn-primary"
+                                            onclick="add_checkbox(this.id);" data-dismiss="modal">确定
+                                    </button>
+                                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+
+            </form>
+
+            {##单品列表#}
+            {% for data in products %}
+                <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3 vcenter" style="width: 24%;">
+                    <div class="well">
+                        <div style="position:relative">
+                            <label for="all{{ data.fingerprint }}"
+                                    >
+                                <input class="format_prod" data-fp="{{ data.fingerprint }}"
+                                       style="position:absolute;top:0;left:0;" type="checkbox"
+                                       id="all{{ data.fingerprint }}" onchange="display_sel_num();">
+                                {% if data.has_processed %}
+                                    {#                                        <span style="position:absolute;top:0;right:0;color: deeppink;"#}
+                                    {#                                              class="glyphicon glyphicon-ok btn-lg"></span>#}
+                                    {#                                    <img style="position:absolute;top:0;right:0;height: 40px;width: 40px;"#}
+                                    {#                                         src="/static/img/process.png">#}
+                                {% endif %}
+                                <img data-src="holder.js/100%x200" alt="100%x200"
+                                     src="http://mstore.b0.upaiyun.com/products/{{ data.cover_image|json_get:"path" }}!w640"
+                                     style="height: 100%; width: 100%; display: block;"
+                                        ></label>
+                            {#                                     ondblclick="open_modal('{{ data.fingerprint }}');"></label>#}
+
+                        </div>
+                        <a id="{{ data.fingerprint }}" href="//share.ofashion.me/p/?pid={{ data.fingerprint }}"
+                           target="_blank"><h6
+                                style="width: 100%;overflow: hidden;white-space: nowrap;text-overflow: ellipsis;">{{ data.name }}</h6>
+                        </a>
+                        {#                        <hr>#}
+
+                        <div>
+                            {% for tag in data.custom_tags %}
+                                <button type="button" class="btn btn-danger btn-xs" value="{{ tag }}"
+                                        data-fp="{{ data.fingerprint }}"
+                                        {#                                        onclick="del_checkbox(this);">{{ tag }} <i#}
+                                        >{{ tag }}
+                                    {#                                    <i class="glyphicon glyphicon-remove"></i>#}
+                                </button>
+                            {% endfor %}
+
+                            {#                            <button type="button" id="add{{ data.fingerprint }}" class="btn btn-default btn-xs"#}
+                            {#                                    data-toggle="modal"#}
+                            {#                                    data-target="#edit{{ data.fingerprint }}">新增#}
+                            {#                            </button>#}
+                        </div>
+                        <h6>更新时间：{{ data.update_time|date:'Y-m-d H:i:s' }}</h6>
+                    </div>
+
+                </div>
+            {% endfor %}
+        </div>
+
+    </div>
+
+    {##分页#}
+    <ul class="pager">
+        <li><a href="?{% url_replace request 'page' 1 %}">首页</a></li>
+        {% if history.has_previous %}
+            <li><a href="?{% url_replace request 'page' history.previous_page_number %}">上一页</a></li>
+        {% else %}
+            <li class="disabled"><a>上一页</a></li>
+        {% endif %}
+        {{ history.number }}/{{ history.paginator.num_pages }}
+        {% if history.has_next %}
+            <li><a href="?{% url_replace request 'page' history.next_page_number %}">下一页</a></li>
+        {% else %}
+            <li class="disabled"><a>下一页</a></li>
+        {% endif %}
+        <li><a href="?{% url_replace request 'page' history.paginator.num_pages %}">尾页</a></li>
+        <li>
+            <form class="form-inline">
+                <input hidden="hidden" name="sort" {% if sort %}value="{{ sort }}"{% else %}value=""{% endif %}>
+                <input hidden="hidden" name="brand" {% if sort %}value="{{ brand }}"{% else %}value=""{% endif %}>
+                <input hidden="hidden" name="search" {% if sort %}value="{{ search }}"{% else %}value=""{% endif %}>
+                <input hidden="hidden" name="order" {% if sort %}value="{{ order }}"{% else %}value=""{% endif %}>
+                <input class="form-control" type="text" name="page" placeholder="页码">
+                <button type="submit" class="btn btn-default">跳转</button>
+            </form>
+        </li>
+    </ul>
+    {#    <div class="span7 text-center row">#}
+
+    {#     </div>#}
+    <!-- /container -->
+    <script src="/static/js/stickUp.min.js"></script>
+    <script src="/static/js/tags.js"></script>
+    <script type="text/javascript">
+        //initiating jQuery
+        jQuery(function ($) {
+            $(document).ready(function () {
+                //enabling stickUp on the '.navbar-wrapper' class
+                $('.navbar-wrapper').stickUp();
+            });
+        });
+
+    </script>
+
+{% endblock %}

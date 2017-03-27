@@ -1,0 +1,448 @@
+#! -*- coding:utf-8 -*-
+from django.db import models
+import json
+
+#自定义listfield,用于标签映射单选框，多选框生成taglist
+class ListField(models.TextField):
+    __metaclass__ = models.SubfieldBase
+    description = "Stores a python list"
+
+    def __init__(self, *args, **kwargs):
+        super(ListField, self).__init__(*args, **kwargs)
+
+    def to_python(self, value):
+        if not value:
+            value = []
+        if isinstance(value, list):
+            return value
+        return eval(value)
+
+    def get_prep_value(self, value):
+        if value is None:
+            return value
+        return value
+
+    def get_db_prep_value(self, value, connection=None, prepared=False):
+        if isinstance(value, basestring):
+            return value
+        elif isinstance(value, list):
+            return json.dumps(value, ensure_ascii=False)
+
+    def value_to_string(self, obj):
+        value = self._get_val_from_obj(obj)
+        return self.get_db_prep_value(value)
+
+
+# Create your models here.
+class CrawlInfo(models.Model):
+    id = models.IntegerField(primary_key=True)
+    brand_id = models.CharField(max_length=45)
+    region = models.CharField(max_length=45)
+    original_no = models.IntegerField(blank=True, null=True)
+    touch_no = models.IntegerField(blank=True, null=True)
+    start_time = models.DateTimeField(blank=True, null=True)
+    end_time = models.DateTimeField(blank=True, null=True)
+    duration = models.IntegerField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'crawl_info'
+        app_label = 'celery'
+
+
+class CrawlStatus(models.Model):
+    idmonitor = models.IntegerField(primary_key=True)
+    task_id = models.CharField(unique=True, max_length=45, blank=True)
+    enabled = models.IntegerField()
+    parameter = models.TextField(blank=True)
+    priority = models.IntegerField(blank=True, null=True)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'crawl_status'
+        app_label = 'celery'
+
+
+class Groupmeta(models.Model):
+    id = models.IntegerField(primary_key=True)
+    taskset_id = models.CharField(unique=True, max_length=255, blank=True)
+    result = models.TextField(blank=True)
+    date_done = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'groupmeta'
+        app_label = 'celery'
+
+
+class Taskmeta(models.Model):
+    id = models.IntegerField(primary_key=True)
+    task_id = models.CharField(unique=True, max_length=255, blank=True)
+    status = models.CharField(max_length=50, blank=True)
+    result = models.TextField(blank=True)
+    date_done = models.DateTimeField(blank=True, null=True)
+    traceback = models.TextField(blank=True)
+
+    class Meta:
+        managed = False
+        db_table = 'taskmeta'
+        app_label = 'celery'
+
+
+class BrandDuration(models.Model):
+    brand_id = models.IntegerField()
+    region = models.CharField(max_length=2)
+    crawl_time = models.DateTimeField()
+    brand_name = models.CharField(max_length=45)
+    start_time = models.DateTimeField()
+    end_time = models.DateTimeField()
+    duration = models.IntegerField()
+    action = models.CharField(max_length=45)
+    update_time = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'brand_duration'
+        app_label = 'products'
+
+
+class BrandInfo(models.Model):
+    brand_id = models.IntegerField(primary_key=True)
+    brandname_e = models.CharField(max_length=45)
+    brandname_c = models.CharField(max_length=45, blank=True)
+    brandname_s = models.CharField(max_length=45)
+
+    class Meta:
+        managed = False
+        db_table = 'brand_info'
+        app_label = 'products'
+
+
+class CurrencyInfo(models.Model):
+    currency = models.CharField(primary_key=True, max_length=3)
+    symbol = models.CharField(max_length=8, blank=True)
+    name = models.CharField(max_length=45, blank=True)
+    rate = models.FloatField(blank=True, null=True)
+    update_time = models.DateTimeField(blank=True, null=True)
+    touch_time = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'currency_info'
+        app_label = 'products'
+
+
+class Hostdata(models.Model):
+    hostkey = models.CharField(primary_key=True, max_length=45)
+    config_data = models.TextField(blank=True)
+    host_data = models.TextField(blank=True)
+
+    class Meta:
+        managed = False
+        db_table = 'hostdata'
+        app_label = 'products'
+
+
+class ImagesStore(models.Model):
+    checksum = models.CharField(primary_key=True, max_length=64)
+    url = models.CharField(max_length=1024)
+    url_hash = models.CharField(max_length=32)
+    path = models.CharField(unique=True, max_length=96)
+    file_name = models.CharField(max_length=45)
+    width = models.IntegerField()
+    height = models.IntegerField()
+    format = models.CharField(max_length=32)
+    size = models.IntegerField()
+    update_time = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'images_store'
+        app_label = 'products'
+
+
+class MfashionTags(models.Model):
+    idmfashion_tags = models.AutoField(primary_key=True)
+    tag = models.CharField(max_length=63)
+    details = models.TextField(blank=True)
+
+    class Meta:
+        managed = False
+        db_table = 'mfashion_tags'
+        app_label = 'products'
+
+
+class MonitorStatus(models.Model):
+    idmonitor = models.IntegerField(primary_key=True)
+    enabled = models.IntegerField()
+    parameter = models.TextField(blank=True)
+    monitor_status = models.IntegerField()
+    monitor_pid = models.IntegerField(blank=True, null=True)
+    recrawl_pid = models.IntegerField(blank=True, null=True)
+    priority = models.IntegerField(blank=True, null=True)
+    timestamp = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'monitor_status'
+        app_label = 'products'
+
+
+class OriginalTags(models.Model):
+    idmappings = models.IntegerField(unique=True, primary_key=True)
+    brand_id = models.IntegerField()
+    region = models.CharField(max_length=2)
+    tag_name = models.CharField(max_length=250)
+    tag_type = models.CharField(max_length=45)
+    tag_text = models.CharField(max_length=1024, blank=True)
+    ignore_flag = models.IntegerField()
+    mapping_list = ListField(blank=True)
+    mapping_tag1 = models.CharField(max_length=45, blank=True)
+    mapping_tag2 = models.CharField(max_length=45, blank=True)
+    mapping_tag3 = models.CharField(max_length=45, blank=True)
+    update_time = models.DateTimeField(auto_now=True)
+    edited = models.IntegerField()
+
+    def save(self, *args, **kwargs):
+        self.mapping_list = []
+        if self.mapping_tag1:
+            self.mapping_list.append(self.mapping_tag1)
+        if self.mapping_tag2:
+            self.mapping_list.append(self.mapping_tag2)
+        if self.mapping_tag3:
+            self.mapping_list.append(self.mapping_tag3)
+        super(OriginalTags, self).save(*args, **kwargs)
+
+    class Meta:
+        managed = False
+        db_table = 'original_tags'
+        app_label = 'products'
+
+
+class PriceDashboard(models.Model):
+    id = models.IntegerField(primary_key=True)
+    brand_id = models.IntegerField(blank=True, null=True)
+    brand_name = models.CharField(max_length=45, blank=True)
+    fingerprint = models.CharField(max_length=32)
+    price_trend = models.IntegerField(blank=True, null=True)
+    name = models.CharField(max_length=128, blank=True)
+    model = models.CharField(max_length=45, blank=True)
+    region = models.CharField(max_length=2, blank=True)
+    old_price = models.CharField(max_length=100, blank=True)
+    new_price = models.CharField(max_length=100, blank=True)
+    idproducts = models.IntegerField(blank=True, null=True)
+    price_fetch_time = models.DateTimeField()
+    update_time = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'price_dashboard'
+        app_label = 'products'
+
+
+class Products(models.Model):
+    idproducts = models.IntegerField(primary_key=True)
+    brand_id = models.IntegerField()
+    region = models.CharField(max_length=2)
+    model = models.CharField(max_length=45)
+    name = models.CharField(max_length=128, blank=True)
+    category = models.CharField(max_length=512, blank=True)
+    url = models.CharField(max_length=2048, blank=True)
+    color = models.TextField(blank=True)
+    description = models.TextField(blank=True)
+    details = models.TextField(blank=True)
+    gender = models.CharField(max_length=18, blank=True)
+    price = models.CharField(max_length=127, blank=True)
+    price_discount = models.CharField(max_length=127, blank=True)
+    price_change = models.CharField(max_length=1)
+    fetch_time = models.DateTimeField()
+    update_time = models.DateTimeField()
+    touch_time = models.DateTimeField()
+    modified = models.IntegerField(blank=True, null=True)
+    update_flag = models.CharField(max_length=2, blank=True)
+    offline = models.IntegerField()
+    fingerprint = models.CharField(max_length=32)
+
+    class Meta:
+        managed = False
+        db_table = 'products'
+        app_label = 'products'
+
+
+class ProductsImage(models.Model):
+    idproducts_image = models.IntegerField(primary_key=True)
+    checksum = models.ForeignKey(ImagesStore, db_column='checksum')
+    brand_id = models.IntegerField()
+    model = models.CharField(max_length=45)
+    fingerprint = models.ForeignKey(Products, db_column='fingerprint', blank=True, null=True)
+    update_time = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'products_image'
+        app_label = 'products'
+
+
+class ProductsMfashionTags(models.Model):
+    idpm_tags = models.IntegerField(primary_key=True)
+    idproducts = models.IntegerField()
+    id_mfashion_tags = models.IntegerField()
+
+    class Meta:
+        managed = False
+        db_table = 'products_mfashion_tags'
+        app_label = 'products'
+
+
+class ProductsOriginalTags(models.Model):
+    idpo_tags = models.IntegerField(primary_key=True)
+    idproducts = models.IntegerField()
+    id_original_tags = models.IntegerField()
+
+    class Meta:
+        managed = False
+        db_table = 'products_original_tags'
+        app_label = 'products'
+
+
+class ProductsPriceHistory(models.Model):
+    idprice_history = models.IntegerField(primary_key=True)
+    idproducts = models.ForeignKey(Products, db_column='idproducts')
+    date = models.DateTimeField()
+    price = models.FloatField(blank=True, null=True)
+    price_discount = models.FloatField(blank=True, null=True)
+    currency = models.CharField(max_length=3)
+
+    class Meta:
+        managed = False
+        db_table = 'products_price_history'
+        app_label = 'products'
+
+
+class TagMappingHistory(models.Model):
+    """标签映射历史记录"""
+
+    id = models.AutoField(primary_key=True)
+    fingerprint = models.CharField(max_length=32)
+    last_mfashion_tags = ListField(blank=True)
+    current_mfashion_tags = ListField(blank=True)
+    user_id = models.IntegerField()
+    update_time = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'tag_mapping_history'
+        app_label = 'products'
+
+
+class CustomTags(models.Model):
+    idcustom_tags = models.AutoField(primary_key=True)
+    tag = models.CharField(max_length=63)
+    details = models.TextField(blank=True)
+
+    class Meta:
+        managed = False
+        db_table = 'custom_tags'
+        app_label = 'products'
+
+class ProductsRelease(models.Model):
+    idrelease = models.IntegerField()
+    fingerprint = models.CharField(primary_key=True, max_length=32)
+    brand_id = models.IntegerField()
+    brandname_e = models.CharField(max_length=45, blank=True)
+    brandname_c = models.CharField(max_length=45, blank=True)
+    model = models.CharField(max_length=64)
+
+    #listfield for mfashion_tags
+    mfashion_tags = ListField(blank=True)
+    original_tags = models.TextField(blank=True)
+    name = models.CharField(max_length=128, blank=True)
+    description = models.TextField(blank=True)
+    details = models.TextField(blank=True)
+    gender = models.CharField(max_length=45, blank=True)
+    category = models.TextField(blank=True)
+    color = models.TextField(blank=True)
+    searchtext = models.TextField()
+    url = models.TextField(blank=True)
+    price = models.FloatField(blank=True, null=True)
+    price_discount = models.FloatField(blank=True, null=True)
+    price_change = models.CharField(max_length=1)
+    price_list = models.TextField(blank=True)
+    o_price = models.FloatField(blank=True, null=True)
+    o_discount = models.FloatField(blank=True, null=True)
+    o_currency = models.CharField(max_length=3, blank=True)
+    region_list = models.TextField(blank=True)
+    cover_image = models.TextField(blank=True)
+    image_list = models.TextField(blank=True)
+    rank = models.IntegerField(blank=True, null=True)
+    shares = models.IntegerField(blank=True, null=True)
+    downloads = models.IntegerField(blank=True, null=True)
+    favors = models.IntegerField(blank=True, null=True)
+    fetch_time = models.DateTimeField()
+    last_price_ts = models.DateTimeField()
+    product_update_ts = models.DateTimeField()
+    update_time = models.DateTimeField(auto_now=True)
+    offline = models.IntegerField()
+    has_processed = models.IntegerField()
+
+    #listfield for custom_tags
+    custom_tags = ListField(blank=True)
+
+    def save(self, *args, **kwargs):
+        #单品处理标志，保证人工处理的标签不会被标签映射覆盖
+        self.has_processed = 1
+        super(ProductsRelease, self).save(*args, **kwargs)
+
+    class Meta:
+        managed = False
+        db_table = 'products_release'
+        app_label = 'products'
+
+
+class ProductsTranslate(models.Model):
+    fingerprint = models.CharField(primary_key=True, max_length=32)
+    description_cn = models.TextField()
+    description_en = models.TextField()
+    details_cn = models.TextField()
+    details_en = models.TextField()
+    update_time = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'products_translate'
+        app_label = 'products'
+
+
+class RegionInfo(models.Model):
+    iso_code = models.CharField(primary_key=True, max_length=2)
+    iso_code3 = models.CharField(max_length=3)
+    name_e = models.CharField(max_length=45)
+    name_c = models.CharField(max_length=45, blank=True)
+    currency = models.CharField(max_length=3)
+    rate = models.FloatField(blank=True, null=True)
+    update_time = models.DateTimeField(blank=True, null=True)
+    weight = models.IntegerField()
+    status = models.IntegerField()
+
+    class Meta:
+        managed = False
+        db_table = 'region_info'
+        app_label = 'products'
+
+
+class ZOnlineScheduleInfo(models.Model):
+    id = models.IntegerField(primary_key=True)
+    brand_id = models.IntegerField()
+    brandname_e = models.CharField(max_length=50)
+    begintime = models.DateTimeField()
+    running = models.IntegerField()
+    paras = models.CharField(max_length=64)
+    updatetime = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'z_online_schedule_info'
+        app_label = 'products'
+
+

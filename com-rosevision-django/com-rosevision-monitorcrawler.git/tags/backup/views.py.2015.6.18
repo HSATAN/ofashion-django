@@ -1,0 +1,300 @@
+#-*- coding:utf-8 -*-
+import datetime
+from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render_to_response, HttpResponseRedirect, HttpResponse
+from django.db.models import Count
+from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
+from django.core.paginator import EmptyPage
+from django.core.paginator import PageNotAnInteger
+from django.template import RequestContext
+from django.forms.models import modelformset_factory, formset_factory
+from django.db.models import Q
+import operator
+from django.contrib.auth.models import User, Permission
+import time
+from web.models import *
+from tags.forms import *
+import re
+import json
+from django.contrib.auth.decorators import permission_required
+
+mfashion_tags_perm = 'products.change_mfashiontags'
+tag_mapping_perm = 'products.change_originaltags'
+
+
+@login_required()
+def tags(request):
+    #类目处理
+    #品牌、分类、是否处理、有无标签
+    brand = request.GET.get('brand', None)
+    sort = request.GET.get('sort', None)
+    # processed = request.GET.get('processed', None)
+    # has_tag = request.GET.get('has_tag', None)
+    search = request.GET.get('search', None)
+    order = request.GET.get('order', None)
+
+    filter_brand = Q(brand_id=brand) if brand else ~Q(brand_id=None)
+    # filter_sort = Q(mfashion_tags__contains=sort) if sort else ~Q(brand_id=None)
+
+    if sort == '0':
+        filter_sort = Q(mfashion_tags=[])
+    elif sort:
+        filter_sort = Q(mfashion_tags__contains=sort)
+    else:
+        filter_sort = ~Q(brand_id=None)
+
+    # if has_tag == '1':
+    #     filter_tag = ~Q(mfashion_tags=[])
+    # elif has_tag == '0':
+    #     filter_tag = Q(mfashion_tags=[])
+    # else:
+    #     filter_tag = ~Q(brand_id=None)
+
+    # filter_processed = Q(has_processed=processed) if processed else ~Q(brand_id=None)
+    search_word = reduce(operator.and_, (
+        (Q(mfashion_tags__contains=x) | Q(name__contains=x) | Q(description__contains=x) | Q(details__contains=x)) for x
+        in
+        search.split(' '))) if search else ~Q(
+        brand_id=None)
+    order_seq = '-update_time' if order == 'new' else 'update_time'
+
+    current_url = request.get_full_path()
+
+    is_index = True
+    # if re.findall(r'(/tags/*$|/tags/\?page|/tags/\?)', current_url):
+    #     is_index = True
+    # else:
+    #     is_index = False
+
+    home_url = re.findall(r'(/tags/\d+|/tags)', current_url)[0]
+
+    #品牌下拉列表
+    brand_name = ZOnlineScheduleInfo.objects.get(filter_brand).brandname_e if brand else None
+    brands = ZOnlineScheduleInfo.objects.all().order_by('brandname_e')
+    mfashion_tags = MfashionTags.objects.all()
+
+    # products_all = ProductsRelease.objects.filter(
+    #     filter_brand, filter_sort, filter_tag, filter_processed, search_word).all().order_by(order_seq)
+
+    products_all = ProductsRelease.objects.filter(
+        filter_brand, filter_sort, search_word).all().exclude(
+        brand_id__in=[10006, 10114, 10032, 10040, 10085, 10100, 10113, 10127, 10138, 10155, 10169, 10241,
+                      10299, 10322]).order_by(order_seq)
+
+    #分页
+    limit = 120
+    paginator = Paginator(products_all, limit)
+    page = request.GET.get('page')
+    try:
+        products = paginator.page(page)
+    except PageNotAnInteger:
+        products = paginator.page(1)
+    except EmptyPage:
+        products = paginator.page(paginator.num_pages)
+
+    queryset = None
+    queryset = products_all.filter(
+        pk__in=[p.fingerprint for p in products.object_list]).all()
+
+    #标签提交post更新
+    if request.method == 'POST':
+        formset = ReleaseFormSet(request.POST or None, queryset=queryset)
+        #update or add
+        if formset.is_valid():
+            for form in formset.forms:
+                if request.POST.get(form.instance.pk, None) == '1':
+                    # form.save()
+                    fingerprint = form.initial['fingerprint']
+                    last_mfashion_tags = form.initial['mfashion_tags']
+                    current_mfashion_tags = form.cleaned_data['mfashion_tags']
+                    user_id = request.user.id
+
+                    ProductsRelease.objects.filter(fingerprint=fingerprint).update(mfashion_tags=current_mfashion_tags,
+                                                                                   has_processed=1)
+                    TagMappingHistory(fingerprint=fingerprint, last_mfashion_tags=last_mfashion_tags,
+                                      current_mfashion_tags=current_mfashion_tags, user_id=user_id).save()
+            return HttpResponseRedirect(current_url)
+    else:
+        formset = ReleaseFormSet(queryset=queryset)
+
+    return render_to_response("tags/index.html", locals(), context_instance=RequestContext(request))
+
+
+@login_required()
+def custom_tags(request):
+    #标签处理
+    #品牌、分类、是否处理、有无标签
+    brand = request.GET.get('brand', None)
+    sort = request.GET.get('sort', None)
+    search = request.GET.get('search', None)
+    order = request.GET.get('order', None)
+
+    filter_brand = Q(brand_id=brand) if brand else ~Q(brand_id=None)
+
+    if sort == '0':
+        filter_sort = Q(custom_tags=[])
+    elif sort:
+        filter_sort = Q(custom_tags__contains=sort)
+    else:
+        filter_sort = ~Q(brand_id=None)
+
+    search_word = reduce(operator.and_, (
+        (Q(custom_tags__contains=x) | Q(name__contains=x) | Q(description__contains=x) | Q(details__contains=x)) for x
+        in
+        search.split(' '))) if search else ~Q(
+        brand_id=None)
+    order_seq = '-update_time' if order == 'new' else 'update_time'
+
+    current_url = request.get_full_path()
+
+    is_custom = True
+
+    home_url = re.findall(r'(/tags/\d+|/tags)', current_url)[0]
+
+    #品牌下拉列表
+    brand_name = ZOnlineScheduleInfo.objects.get(filter_brand).brandname_e if brand else None
+    brands = ZOnlineScheduleInfo.objects.all().order_by('brandname_e')
+    custom_tags = CustomTags.objects.all()
+
+    products_all = ProductsRelease.objects.filter(
+        filter_brand, filter_sort, search_word).all().order_by(order_seq)
+
+    #分页
+    limit = 120
+    paginator = Paginator(products_all, limit)
+    page = request.GET.get('page')
+    try:
+        products = paginator.page(page)
+    except PageNotAnInteger:
+        products = paginator.page(1)
+    except EmptyPage:
+        products = paginator.page(paginator.num_pages)
+
+    queryset = None
+    queryset = products_all.filter(
+        pk__in=[p.fingerprint for p in products.object_list]).all()
+
+    #标签提交post更新
+    if request.method == 'POST':
+        formset = ReleaseFormSet1(request.POST or None, queryset=queryset)
+        #update or add
+        if formset.is_valid():
+            for form in formset.forms:
+                if request.POST.get(form.instance.pk, None) == '1':
+                    fingerprint = form.initial['fingerprint']
+                    last_custom_tags = form.initial['custom_tags']
+                    current_custom_tags = form.cleaned_data['custom_tags']
+                    user_id = request.user.id
+
+                    ProductsRelease.objects.filter(fingerprint=fingerprint).update(custom_tags=current_custom_tags,
+                                                                                   has_processed=1)
+                    # TagMappingHistory(fingerprint=fingerprint, last_mfashion_tags=last_custom_tags,
+                    #                   current_mfashion_tags=current_mfashion_tags, user_id=user_id).save()
+            return HttpResponseRedirect(current_url)
+    else:
+        formset = ReleaseFormSet1(queryset=queryset)
+
+    return render_to_response("tags/index1.html", locals(), context_instance=RequestContext(request))
+
+
+@login_required()
+@permission_required(mfashion_tags_perm, login_url='/accounts/unauthenticated/')
+def manage(request):
+    #标签管理
+    if request.POST:
+        instance = None
+        if 'id' in request.POST:
+            instance = get_object_or_404(MfashionTags, idmfashion_tags=request.POST['id'])
+        form = MfashionTagsForm(request.POST or None, instance=instance)
+
+        #delete
+        if form.is_valid() and 'delete' in request.POST:
+            model_instance = form.save(commit=False)
+            model_instance.delete()
+        #update or add
+        elif form.is_valid():
+            form.save()
+    else:
+        form = MfashionTagsForm()
+
+    all_forms = [MfashionTagsForm(instance=val) for val in MfashionTags.objects.all()]
+    mfashion_tags = MfashionTags.objects.all()
+
+    return render_to_response("tags/manage.html", locals(),
+                              context_instance=RequestContext(request))
+
+
+@login_required()
+@permission_required(tag_mapping_perm, login_url='/accounts/unauthenticated/')
+def mapping(request, brand=None):
+    #标签映射
+    brand_name = None
+    if brand:
+        products_all = ProductsRelease.objects.filter(brand_id=brand).all()
+        brand_name = ZOnlineScheduleInfo.objects.get(brand_id=brand).brandname_e
+        data = OriginalTags.objects.filter(brand_id=brand).filter(region__in=['cn', 'us', 'uk']).filter(
+            tag_type__in=['category-0', 'category-1', 'category-2']).all().order_by('region', 'tag_type')
+        #todo
+        # tag_type__in=['category-0', 'category-1', 'category-2']).all().order_by('region', 'tag_type')
+        forms = [OriginalTagsForm(instance=val) for val in data]
+    else:
+        products_all = ProductsRelease.objects.all()
+
+    brands = ZOnlineScheduleInfo.objects.all().order_by('brandname_e')
+
+
+    # OriginalTags.objects.filter(brand_id=10106).filter(region__in=['cn', 'us', 'uk']).all()
+
+    return render_to_response("tags/mapping.html", locals(), context_instance=RequestContext(request))
+
+
+#post data for tag-mapping,ajax
+def mapping_ajax(request):
+    if request.method == 'POST':
+        instance = get_object_or_404(OriginalTags, idmappings=request.POST['idmappings'])
+        form = OriginalTagsForm(request.POST or None, instance=instance)
+        #update or add
+        if form.is_valid():
+            idmappings = form.cleaned_data['idmappings']
+            brand_id = form.cleaned_data['brand_id']
+            region = form.cleaned_data['region']
+            tag_name = form.cleaned_data['tag_name']
+            tag_type = form.cleaned_data['tag_type']
+            mapping_tag1 = form.cleaned_data['mapping_tag1']
+            mapping_tag2 = form.cleaned_data['mapping_tag2']
+            mapping_tag3 = form.cleaned_data['mapping_tag3']
+            mapping_list = json.dumps(filter(lambda x: x, [mapping_tag1, mapping_tag2, mapping_tag3]),
+                                      ensure_ascii=False)
+            OriginalTags.objects.filter(idmappings=idmappings).update(brand_id=brand_id, region=region,
+                                                                      tag_name=tag_name,
+                                                                      tag_type=tag_type, mapping_list=mapping_list,
+                                                                      mapping_tag1=mapping_tag1,
+                                                                      mapping_tag2=mapping_tag2,
+                                                                      mapping_tag3=mapping_tag3, edited=1)
+            # form.save()
+            return HttpResponse(' '.join(filter(lambda x: x, [mapping_tag1, mapping_tag2, mapping_tag3])))
+    return 'ERROR'
+
+
+@login_required()
+def record(request):
+    #记录查询
+    users = User.objects.all()
+
+    if request.method == 'GET' and 'user' in request.GET:
+        current_user = User.objects.get(pk=request.GET['user'])
+        history_all = TagMappingHistory.objects.filter(user_id=current_user.id).order_by('-update_time')
+
+        #分页
+        limit = 100
+        paginator = Paginator(history_all, limit)
+        page = request.GET.get('page')
+        try:
+            history = paginator.page(page)
+        except PageNotAnInteger:
+            history = paginator.page(1)
+        except EmptyPage:
+            history = paginator.page(paginator.num_pages)
+
+    return render_to_response("tags/record.html", locals(), context_instance=RequestContext(request))

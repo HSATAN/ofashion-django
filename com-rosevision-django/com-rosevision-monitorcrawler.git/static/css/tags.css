@@ -1,0 +1,28 @@
+body {
+    min-height: 100%;
+}
+
+.navbar-static-top {
+    margin-bottom: 19px;
+}
+
+.vcenter {
+    display: inline-block;
+    vertical-align: middle;
+    float: none;
+}
+
+.my-btn:active, .my-btn.active {
+
+    background-color: #5cb85c;
+    border-color: #4cae4c;
+}
+
+.my-btn {
+    background-color: #fff;
+    border-color: #4cae4c;
+}
+
+.modal-dialog {
+  padding-top: 15%;
+}
